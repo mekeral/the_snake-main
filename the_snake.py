@@ -69,8 +69,6 @@ class Apple(GameObject):
     def draw(self, screen):
         """
         Отрисовка яблока на экране.
-
-        screen: Поверхность экрана Pygame.
         """
         rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, self.body_color, rect)
@@ -101,8 +99,6 @@ class Snake(GameObject):
     def draw(self, screen):
         """
         Отрисовка змейки на экране.
-
-        screen: Поверхность экрана Pygame.
         """
         for position in self.positions:
             rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
@@ -132,8 +128,6 @@ class Snake(GameObject):
     def eat(self, apple):
         """
         Увеличение длины змейки при поедании яблока.
-
-        apple: Объект Apple, который съедает змейка.
         """
         self.positions.append(self.last)
 
@@ -170,8 +164,6 @@ class Game:
     def draw(self, screen):
         """
         Отрисовка всех игровых объектов на экране.
-
-        screen: Поверхность экрана Pygame.
         """
         screen.fill(BOARD_BACKGROUND_COLOR)
         self.snake.draw(screen)
@@ -200,8 +192,6 @@ class Game:
 def handle_keys(snake):
     """
     Обработка ввода с клавиатуры для управления направлением змейки.
-
-    snake: Объект Snake для управления.
     """
     for event in pg.event.get():
         if event.type == pg.QUIT:
