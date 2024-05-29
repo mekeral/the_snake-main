@@ -181,8 +181,6 @@ def handle_keys(snake):
                 snake.update_direction(DOWN)
             elif event.key == pg.K_LEFT and snake.direction != RIGHT:
                 snake.update_direction(LEFT)
-            elif event.key == pg.K_RIGHT and snake.direction != LEFT: 
-                snake.update_direction(RIGHT)
 
 
 def main():
