@@ -1,5 +1,5 @@
-import pygame as pg
 from random import choice, randint
+import pygame as pg
 
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
@@ -39,22 +39,13 @@ class GameObject:
     """Базовый класс для игровых объектов."""
 
     def __init__(self, position=None, body_color=None):
-        """
-        Инициализация GameObject.
-
-        position: Кортеж, представляющий позицию объекта.
-        body_color: Кортеж, представляющий цвет объекта.
-        """
+        """Инициализация GameObject."""
         self.position = position
         self.body_color = body_color
 
     def draw(self, screen):
-        """
-        Отрисовка объекта на экране.
-
-        screen: Поверхность экрана Pygame.
-        """
-        raise NotImplementedError("Метод draw должен быть определен в подклассе.")
+        """Отрисовка объекта на экране."""
+        raise NotImplementedError
 
 
 class Apple(GameObject):
@@ -67,9 +58,7 @@ class Apple(GameObject):
         self.body_color = APPLE_COLOR
 
     def draw(self, screen):
-        """
-        Отрисовка яблока на экране.
-        """
+        """Отрисовка яблока на экране."""
         rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, self.body_color, rect)
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
@@ -97,9 +86,7 @@ class Snake(GameObject):
         self.last = None
 
     def draw(self, screen):
-        """
-        Отрисовка змейки на экране.
-        """
+        """Отрисовка змейки на экране."""
         for position in self.positions:
             rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, self.body_color, rect)
@@ -126,17 +113,11 @@ class Snake(GameObject):
             self.positions = [new_head] + self.positions[:-1]
 
     def eat(self, apple):
-        """
-        Увеличение длины змейки при поедании яблока.
-        """
+        """Увеличение длины змейки при поедании яблока."""
         self.positions.append(self.last)
 
     def update_direction(self, new_direction):
-        """
-        Обновление направления движения змейки.
-
-        new_direction: Кортеж, представляющий новое направление.
-        """
+        """Обновление направления движения змейки."""
         if new_direction in [UP, DOWN, LEFT, RIGHT]:
             self.next_direction = new_direction
 
@@ -162,9 +143,7 @@ class Game:
         self.snake = Snake()
 
     def draw(self, screen):
-        """
-        Отрисовка всех игровых объектов на экране.
-        """
+        """Отрисовка всех игровых объектов на экране."""
         screen.fill(BOARD_BACKGROUND_COLOR)
         self.snake.draw(screen)
         self.apple.draw(screen)
@@ -190,9 +169,7 @@ class Game:
 
 
 def handle_keys(snake):
-    """
-    Обработка ввода с клавиатуры для управления направлением змейки.
-    """
+    """Обработка ввода с клавиатуры для управления направлением змейки."""
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
@@ -204,7 +181,7 @@ def handle_keys(snake):
                 snake.update_direction(DOWN)
             elif event.key == pg.K_LEFT and snake.direction != RIGHT:
                 snake.update_direction(LEFT)
-            elif event.key == pg.K_RIGHT and snake.direction != LEFT:
+            elif event.key == pg.K_RIGHT and snake.direction != LEFT: 
                 snake.update_direction(RIGHT)
 
 
