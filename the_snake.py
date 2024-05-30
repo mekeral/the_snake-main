@@ -1,6 +1,7 @@
 import pygame as pg
 from random import choice, randint
 
+
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
@@ -156,8 +157,12 @@ class Game:
     def check_collision(self):
         """Проверка на столкновения змейки со стенами и яблоком."""
         head_x, head_y = self.snake.get_head_position()
-        if (head_x < 0 or head_x >= SCREEN_WIDTH or
-                head_y < 0 or head_y >= SCREEN_HEIGHT):
+        if (
+            head_x < 0
+            or head_x >= SCREEN_WIDTH
+            or head_y < 0
+            or head_y >= SCREEN_HEIGHT
+        ):
             self.snake.reset()
 
         if self.snake.positions[0] in self.snake.positions[1:]:
@@ -181,6 +186,8 @@ def handle_keys(snake):
                 snake.update_direction(DOWN)
             elif event.key == pg.K_LEFT and snake.direction != RIGHT:
                 snake.update_direction(LEFT)
+            elif event.key == pg.K_RIGHT and snake.direction != LEFT:
+                snake.update_direction(RIGHT)
 
 
 def main():
