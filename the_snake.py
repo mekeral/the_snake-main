@@ -1,7 +1,6 @@
 import pygame as pg
 from random import choice, randint
 
-
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
@@ -44,6 +43,12 @@ class GameObject:
         self.position = position
         self.body_color = body_color
 
+    def draw_cell(self, screen):
+        """Отрисовка одной ячейки объекта на экране."""
+        rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
+        pg.draw.rect(screen, self.body_color, rect)
+        pg.draw.rect(screen, BORDER_COLOR, rect, 1)
+
     def draw(self, screen):
         """Отрисовка объекта на экране."""
         raise NotImplementedError
@@ -53,8 +58,12 @@ class Apple(GameObject):
     """Класс, представляющий яблоко в игре."""
 
     def __init__(self):
-        """Инициализация яблока и случайная генерация его позиции."""
+        """Инициализация яблока."""
         super().__init__()
+        self.reset_position()
+
+    def reset_position(self):
+        """Сброс яблока и случайная генерация его позиции."""
         self.randomize_position()
         self.body_color = APPLE_COLOR
 
@@ -76,8 +85,13 @@ class Snake(GameObject):
     """Класс, представляющий змейку в игре."""
 
     def __init__(self):
-        """Инициализация змейки с начальной позицией и направлением."""
+        """Инициализация змейки."""
+        self.eat_food = False
         super().__init__()
+        self.reset_snake()
+
+    def reset_snake(self):
+        """Сброс змейки с начальной позицией и направлением."""
         self.positions = [
             (GRID_WIDTH // 2 * GRID_SIZE, GRID_HEIGHT // 2 * GRID_SIZE)
         ]
@@ -99,19 +113,19 @@ class Snake(GameObject):
             self.direction = self.next_direction
             self.next_direction = None
 
-        x, y = self.positions[0]
+        x, y = self.get_head_position()
         dx, dy = self.direction
-        self.last = self.positions[-1]
         new_head = (
             (x + dx * GRID_SIZE) % SCREEN_WIDTH,
             (y + dy * GRID_SIZE) % SCREEN_HEIGHT
         )
 
-        if new_head in self.positions[1:]:
-            self.positions = [new_head]
-            self.last = None
+        self.positions.insert(0, new_head)
+        if self.eat_food:
+            self.eat_food = False
         else:
-            self.positions = [new_head] + self.positions[:-1]
+            self.positions.pop()
+        self.last = self.positions[-1]
 
     def eat(self, apple):
         """Увеличение длины змейки при поедании яблока."""
@@ -179,15 +193,20 @@ def handle_keys(snake):
         if event.type == pg.QUIT:
             pg.quit()
             raise SystemExit
-        elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_UP and snake.direction != DOWN:
-                snake.update_direction(UP)
-            elif event.key == pg.K_DOWN and snake.direction != UP:
-                snake.update_direction(DOWN)
-            elif event.key == pg.K_LEFT and snake.direction != RIGHT:
-                snake.update_direction(LEFT)
-            elif event.key == pg.K_RIGHT and snake.direction != LEFT:
-                snake.update_direction(RIGHT)
+        if event.type == pg.KEYDOWN:
+            key_direction_map = {
+                pg.K_UP: UP,
+                pg.K_DOWN: DOWN,
+                pg.K_LEFT: LEFT,
+                pg.K_RIGHT: RIGHT
+            }
+            if event.key in key_direction_map:
+                direction = key_direction_map[event.key]
+                if (direction == UP and snake.direction != DOWN) or \
+                    (direction == DOWN and snake.direction != UP) or \
+                    (direction == LEFT and snake.direction != RIGHT) or \
+                        (direction == RIGHT and snake.direction != LEFT):
+                    snake.update_direction(direction)
 
 
 def main():
