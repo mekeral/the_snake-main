@@ -35,6 +35,35 @@ pg.display.set_caption('Змейка')
 clock = pg.time.Clock()
 
 
+# Словарь для определения возможных поворотов:
+TURNS = {
+    (pg.K_UP, LEFT): UP,
+    (pg.K_UP, RIGHT): UP,
+    (pg.K_DOWN, LEFT): DOWN,
+    (pg.K_DOWN, RIGHT): DOWN,
+    (pg.K_LEFT, UP): LEFT,
+    (pg.K_LEFT, DOWN): LEFT,
+    (pg.K_RIGHT, UP): RIGHT,
+    (pg.K_RIGHT, DOWN): RIGHT
+}
+
+TURN_KEYS = set(event_key for event_key, _ in TURNS)
+
+
+TURNS = {
+    (pg.K_UP, LEFT): UP,
+    (pg.K_UP, RIGHT): UP,
+    (pg.K_DOWN, LEFT): DOWN,
+    (pg.K_DOWN, RIGHT): DOWN,
+    (pg.K_LEFT, UP): LEFT,
+    (pg.K_LEFT, DOWN): LEFT,
+    (pg.K_RIGHT, UP): RIGHT,
+    (pg.K_RIGHT, DOWN): RIGHT
+}
+
+TURN_KEYS = set(event_key for event_key, _ in TURNS)
+
+
 class GameObject:
     """Базовый класс для игровых объектов."""
 
@@ -43,10 +72,10 @@ class GameObject:
         self.position = position
         self.body_color = body_color
 
-    def draw_cell(self, screen):
+    def draw_cell(self, screen, position, color):
         """Отрисовка одной ячейки объекта на экране."""
-        rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-        pg.draw.rect(screen, self.body_color, rect)
+        rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
+        pg.draw.rect(screen, color, rect)
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
     def draw(self, screen):
@@ -69,9 +98,7 @@ class Apple(GameObject):
 
     def draw(self, screen):
         """Отрисовка яблока на экране."""
-        rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-        pg.draw.rect(screen, self.body_color, rect)
-        pg.draw.rect(screen, BORDER_COLOR, rect, 1)
+        self.draw_cell(screen, self.position, self.body_color)
 
     def randomize_position(self):
         """Случайная генерация позиции яблока."""
@@ -88,57 +115,7 @@ class Snake(GameObject):
         """Инициализация змейки."""
         self.eat_food = False
         super().__init__()
-        self.reset_snake()
-
-    def reset_snake(self):
-        """Сброс змейки с начальной позицией и направлением."""
-        self.positions = [
-            (GRID_WIDTH // 2 * GRID_SIZE, GRID_HEIGHT // 2 * GRID_SIZE)
-        ]
-        self.direction = choice([UP, DOWN, LEFT, RIGHT])
-        self.next_direction = None
-        self.body_color = SNAKE_COLOR
-        self.last = None
-
-    def draw(self, screen):
-        """Отрисовка змейки на экране."""
-        for position in self.positions:
-            rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
-            pg.draw.rect(screen, self.body_color, rect)
-            pg.draw.rect(screen, BORDER_COLOR, rect, 1)
-
-    def move(self):
-        """Движение змейки в текущем направлении."""
-        if self.next_direction:
-            self.direction = self.next_direction
-            self.next_direction = None
-
-        x, y = self.get_head_position()
-        dx, dy = self.direction
-        new_head = (
-            (x + dx * GRID_SIZE) % SCREEN_WIDTH,
-            (y + dy * GRID_SIZE) % SCREEN_HEIGHT
-        )
-
-        self.positions.insert(0, new_head)
-        if self.eat_food:
-            self.eat_food = False
-        else:
-            self.positions.pop()
-        self.last = self.positions[-1]
-
-    def eat(self, apple):
-        """Увеличение длины змейки при поедании яблока."""
-        self.positions.append(self.last)
-
-    def update_direction(self, new_direction):
-        """Обновление направления движения змейки."""
-        if new_direction in [UP, DOWN, LEFT, RIGHT]:
-            self.next_direction = new_direction
-
-    def get_head_position(self):
-        """Получение текущей позиции головы змейки."""
-        return self.positions[0]
+        self.reset()
 
     def reset(self):
         """Сброс змейки в начальное состояние."""
@@ -146,7 +123,38 @@ class Snake(GameObject):
             (GRID_WIDTH // 2 * GRID_SIZE, GRID_HEIGHT // 2 * GRID_SIZE)
         ]
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
-        self.next_direction = None
+        self.body_color = SNAKE_COLOR
+
+    def draw(self, screen):
+        """Отрисовка змейки на экране."""
+        for position in self.positions:
+            self.draw_cell(screen, position, self.body_color)
+
+    def move(self):
+        """Движение змейки в текущем направлении."""
+        x, y = self.get_head_position()
+        dx, dy = self.direction
+        new_head = (
+            (x + dx * GRID_SIZE) % SCREEN_WIDTH,
+            (y + dy * GRID_SIZE) % SCREEN_HEIGHT
+        )
+        self.positions.insert(0, new_head)
+        if not self.eat_food:
+            self.positions.pop()
+        self.eat_food = False
+
+    def eat(self, apple):
+        """Увеличение длины змейки при поедании яблока."""
+        self.eat_food = True
+
+    def update_direction(self, new_direction):
+        """Обновление направления движения змейки."""
+        if new_direction in {UP, DOWN, LEFT, RIGHT}:
+            self.direction = new_direction
+
+    def get_head_position(self):
+        """Получение текущей позиции головы змейки."""
+        return self.positions[0]
 
 
 class Game:
@@ -179,7 +187,7 @@ class Game:
         ):
             self.snake.reset()
 
-        if self.snake.positions[0] in self.snake.positions[1:]:
+        if self.snake.get_head_position() in self.snake.positions[1:]:
             self.snake.reset()
 
         if self.snake.get_head_position() == self.apple.position:
@@ -194,19 +202,10 @@ def handle_keys(snake):
             pg.quit()
             raise SystemExit
         if event.type == pg.KEYDOWN:
-            key_direction_map = {
-                pg.K_UP: UP,
-                pg.K_DOWN: DOWN,
-                pg.K_LEFT: LEFT,
-                pg.K_RIGHT: RIGHT
-            }
-            if event.key in key_direction_map:
-                direction = key_direction_map[event.key]
-                if (direction == UP and snake.direction != DOWN) or \
-                    (direction == DOWN and snake.direction != UP) or \
-                    (direction == LEFT and snake.direction != RIGHT) or \
-                        (direction == RIGHT and snake.direction != LEFT):
-                    snake.update_direction(direction)
+            if event.key in TURN_KEYS:
+                new_direction = TURNS.get((event.key, snake.direction))
+                if new_direction:
+                    snake.update_direction(new_direction)
 
 
 def main():
