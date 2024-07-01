@@ -28,6 +28,12 @@ screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption('Змейка')
 clock = pg.time.Clock()
 
+# Начальная позиция змейки:
+INITIAL_SNAKE_POSITION = (
+    (GRID_WIDTH // 2) * GRID_SIZE,
+    (GRID_HEIGHT // 2) * GRID_SIZE
+)
+
 # Словарь для определения возможных поворотов:
 TURNS = {
     (pg.K_UP, LEFT): UP,
@@ -58,7 +64,6 @@ class GameObject:
         """Отрисовка одной ячейки объекта на экране."""
         rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, color, rect)
-        pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
     def draw(self, screen):
         """Отрисовка объекта на экране."""
@@ -104,29 +109,50 @@ class Snake(GameObject):
 
     def reset(self):
         """Сброс змейки в начальное состояние."""
-        self.positions = [
-            (GRID_WIDTH // 2 * GRID_SIZE, GRID_HEIGHT // 2 * GRID_SIZE)
-        ]
-        self.direction = INITIAL_DIRECTION
+        self.positions = [INITIAL_SNAKE_POSITION]
+        self.direction = RIGHT
         self.body_color = SNAKE_COLOR
         self.length = 1
+        self.last_tail_position = None  # Последняя позиция хвоста
+        self.self_collision = False  # Флаг для обнаружения самоукуса
 
     def draw(self, screen):
         """Отрисовка змейки на экране."""
+        # Отрисовываем тело змеи
         for position in self.positions:
             self.draw_cell(screen, position, self.body_color)
 
+        # Если есть последняя позиция хвоста, затираем её
+        if self.last_tail_position:
+            self.draw_cell(
+                screen,
+                self.last_tail_position,
+                BOARD_BACKGROUND_COLOR
+            )
+
     def move(self):
         """Движение змейки в текущем направлении."""
+        # Получаем текущую позицию головы змеи
         x, y = self.get_head_position()
         dx, dy = self.direction
+
+        # Вычисляем новую позицию головы змеи
         new_head = (
             (x + dx * GRID_SIZE) % SCREEN_WIDTH,
             (y + dy * GRID_SIZE) % SCREEN_HEIGHT
         )
+        # Проверяем, не столкнулась ли голова змеи с её телом
+        if new_head in self.positions:
+            self.self_collision = True
+
+        # Добавляем новую позицию головы в начало списка позиций
         self.positions.insert(0, new_head)
+
+        # Удаляем последний элемент списка позиций, если длина превышает
         if len(self.positions) > self.length:
-            self.positions.pop()
+            self.last_tail_position = self.positions.pop()
+        else:
+            self.last_tail_position = None
 
     def update_direction(self, new_direction):
         """Обновление направления движения змейки."""
@@ -134,7 +160,7 @@ class Snake(GameObject):
             self.direction = new_direction
 
     def get_head_position(self):
-        """Получение текущей позиции головы змейки."""
+        """Получение текущей позиции головы змеи."""
         return self.positions[0]
 
 
@@ -168,8 +194,9 @@ class Game:
         ):
             self.snake.reset()
 
-        if self.snake.get_head_position() in self.snake.positions[1:]:
+        if self.snake.self_collision:
             self.snake.reset()
+            self.snake.self_collision = False
 
         if self.snake.get_head_position() == self.apple.position:
             self.snake.length += 1
